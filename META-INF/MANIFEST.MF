@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Git Executor
+Bundle-SymbolicName: git-executor;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Export-Package: git_executor;uses:="org.osgi.framework,org.eclipse.ui.plugin"
+Import-Package: javax.annotation;version="1.3.5",
+ javax.inject;version="[1.0.0,2.0.0)"
+Bundle-Activator: git_executor.GitExecutorPlugin
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.tm.terminal.connector.local;visibility:=reexport,
+ junit-jupiter-api;resolution:=optional,
+ org.osgi.test.junit5;resolution:=optional,
+ org.eclipse.ui;resolution:=optional
+Service-Component: OSGI-INF/git_executor.GitExecutor.xml,
+ src/git_executor/component.xml
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Automatic-Module-Name: git.executor
+Bundle-ActivationPolicy: lazy
