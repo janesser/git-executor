@@ -1,10 +1,9 @@
-package git_executor.test;
+package git_executor.test.osgi;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.osgi.annotation.bundle.Requirement;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.junit5.service.ServiceExtension;
 
@@ -15,7 +14,6 @@ import git_executor.GitExecutor;
  * (especially "2. IDE Setup")
  */
 @ExtendWith(ServiceExtension.class)
-@Requirement(namespace="", name = "")
 public class GitExecutorServiceTest {
 	
 	@InjectService
@@ -25,4 +23,5 @@ public class GitExecutorServiceTest {
 	public void canInjectService() {
 		assertNotNull(executor);
 	}
+	
 }

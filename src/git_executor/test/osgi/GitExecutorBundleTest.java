@@ -1,4 +1,4 @@
-package git_executor.test;
+package git_executor.test.osgi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

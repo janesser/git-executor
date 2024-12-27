@@ -2,24 +2,35 @@ package git_executor;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.tm.terminal.view.core.TerminalServiceFactory;
+import org.eclipse.tm.terminal.view.core.interfaces.ITerminalService;
+import org.eclipse.tm.terminal.view.core.interfaces.ITerminalService.Done;
+import org.eclipse.tm.terminal.view.core.interfaces.ITerminalServiceOutputStreamMonitorListener;
+import org.eclipse.tm.terminal.view.core.interfaces.constants.ITerminalsConnectorConstants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
 
 /**
  * GitExecutor allows direct access to git-cli.
  * 
- * Main inspiration form 
+ * Main inspiration form
  * https://github.com/JetBrains/intellij-community/tree/8b6e5ebc0cfccaad14323e47337ddac47c8347aa/plugins/git4idea/src/git4idea
  * 
  * @author Jan Esser <jesser@gmx.de>
  */
 @Component(service = GitExecutor.class, scope = ServiceScope.PROTOTYPE)
 public class GitExecutor {
-	
+
 	public static enum PullMode {
 		FF_ONLY, REBASE_MERGE
 	}
@@ -44,9 +55,9 @@ public class GitExecutor {
 
 	public void setGitExecutable(File gitExecutable) {
 		this.gitExecutable = gitExecutable;
-		
+
 	}
-	
+
 	public void setGitRepo(File gitRepo) {
 		this.gitRepo = gitRepo;
 	}
@@ -63,27 +74,77 @@ public class GitExecutor {
 			throws IOException, InterruptedException {
 		String[] commandStrings = from(gitExecutable.getPath(), gitCommands);
 
-		ProcessBuilder pb = new ProcessBuilder(commandStrings);
-		pb.redirectErrorStream(true);
+		String[] shellCommandStrings = Stream.of("/bin/sh", "-c", //
+				"sleep 1;"+Stream.of(commandStrings).reduce((s1, s2) -> s1 + " " + s2).get() //
+				).toArray((size) -> new String[size]);
+
+		ProcessBuilder pb = new ProcessBuilder(shellCommandStrings);
 		pb.directory(workingDir);
+
+		pb.environment();
+		pb.redirectErrorStream(true);
+		pb.redirectInput(Redirect.PIPE);
+		pb.redirectOutput(Redirect.PIPE);
+
 		Process p = pb.start();
+
+		StringBuilder sb = new StringBuilder();
+		openTerminalOverProcess(p, sb);
+		int waitFor = p.waitFor();
+
 		try (Scanner scanner = new Scanner(p.getInputStream())) {
-			StringBuilder sb = new StringBuilder();
-			for(;scanner.hasNextLine();) {
+			for (; scanner.hasNextLine();) {
 				sb.append(scanner.nextLine());
 				sb.append('\n');
 			}
-			return new GitExecutionResult(p.waitFor(), sb.toString());
+			return new GitExecutionResult(waitFor, sb.toString());
 		}
 	}
 
+	private boolean openTerminalOverProcess(Process p, StringBuilder sb) {
+		ITerminalService terminalService = TerminalServiceFactory.getService();
+		if (terminalService == null)
+			return false;
+
+		Map<String, Object> terminalProperties = new HashMap<>();
+		terminalProperties.put(ITerminalsConnectorConstants.PROP_TITLE, "GitExecutor");
+		terminalProperties.put(ITerminalsConnectorConstants.PROP_LOCAL_ECHO, true);
+		terminalProperties.put(ITerminalsConnectorConstants.PROP_ENCODING, StandardCharsets.UTF_8.name());
+
+		terminalProperties.put(ITerminalsConnectorConstants.PROP_DELEGATE_ID,
+				"org.eclipse.tm.terminal.connector.process.launcher.process");
+		terminalProperties.put(ITerminalsConnectorConstants.PROP_PROCESS_OBJ, p);
+
+		ITerminalServiceOutputStreamMonitorListener[] listeners = new ITerminalServiceOutputStreamMonitorListener[] {
+				(byteBuffer, bytesRead) -> sb.append(new String(byteBuffer, StandardCharsets.UTF_8)) //
+		};
+		terminalProperties.put(ITerminalsConnectorConstants.PROP_STDOUT_LISTENERS, listeners);
+		terminalProperties.put(ITerminalsConnectorConstants.PROP_STDERR_LISTENERS, listeners);
+
+//		terminalProperties.put(ITerminalsConnectorConstants.PROP_DELEGATE_ID,
+//				"org.eclipse.tm.terminal.connector.streams.StreamsConnector");
+//		terminalProperties.put(ITerminalsConnectorConstants.PROP_STREAMS_STDIN, p.getOutputStream());
+//		terminalProperties.put(ITerminalsConnectorConstants.PROP_STREAMS_STDOUT, p.getInputStream());
+//		terminalProperties.put(ITerminalsConnectorConstants.PROP_STREAMS_STDERR, p.getErrorStream());
+
+		terminalService.openConsole(terminalProperties, new Done() {
+
+			@Override
+			public void done(IStatus status) {
+				if (!status.isOK())
+					throw new RuntimeException("terminal failed to complete OK. " + status);
+			}
+
+		});
+
+		return true;
+	}
 
 	public GitExecutionResult version() throws GitExecutionException {
 		return gitExec("--version");
 	}
 
 	public GitExecutionResult fetch() throws GitExecutionException {
-		// TODO get cdt.terminal in place for interactivity
 		return gitExec("fetch");
 	}
 
@@ -123,9 +184,9 @@ public class GitExecutor {
 			throws GitExecutionException {
 		if (commitAll)
 			this.addAll();
-		
+
 		return gitExec("commit", //
-				"-m", message, //
+				"-m \"", message, "\"", //
 				amend ? "--amend" : "", //
 				allowEmpty ? "--allow-empty" : "" //
 		);
@@ -155,7 +216,7 @@ public class GitExecutor {
 	public GitExecutionResult addAll() throws GitExecutionException {
 		return gitExec("add", "-A", ":/");
 	}
-	
+
 	public GitExecutionResult add(File f) throws GitExecutionException {
 		return gitExec("add", "-A", this.gitRepo.toPath().relativize(f.toPath()).toString());
 	}

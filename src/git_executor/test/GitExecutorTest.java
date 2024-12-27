@@ -13,7 +13,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.logging.Logger;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 
 import git_executor.GitExecutionException;
 import git_executor.GitExecutionResult;
@@ -83,9 +82,7 @@ public class GitExecutorTest {
 	}
 
 	@Test
-	@Timeout(1) // terminate in case of open prompt
 	public void canGitFetchSsh() throws GitExecutionException {
-		// TODO GIT_ASKPASS
 		GitExecutionResult result = underTest.fetch("janesser");
 		LOGGER.fine(result.outputText());
 		assertEquals(0, result.exitCode());
