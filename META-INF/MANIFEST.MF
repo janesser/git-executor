@@ -4,17 +4,35 @@ Bundle-Name: Git Executor
 Bundle-SymbolicName: git-executor;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Export-Package: git_executor;uses:="org.osgi.framework,org.eclipse.ui.plugin"
+Import-Package: com.github.fommil.ssh;version="[1.0.0,2.0.0)",
+ com.google.common.io;version="[33.3.0,34.0.0)",
+ com.sshtools.common.logger;version="[3.1.0,4.0.0)",
+ com.sshtools.common.publickey;version="[3.1.0,4.0.0)",
+ com.sshtools.common.ssh;version="[3.1.0,4.0.0)",
+ com.sshtools.common.ssh.components;version="[3.1.0,4.0.0)",
+ com.sshtools.common.util;version="[3.1.0,4.0.0)",
+ org.apache.commons.codec;version="[1.16.0,2.0.0)",
+ org.apache.sshd.server;version="[1.0.0,2.0.0)",
+ org.bouncycastle;version="[1.79.0,2.0.0)",
+ org.bouncycastle.openssl,
+ org.hamcrest;version="[1.3.0,3.0.0]",
+ org.junit.jupiter.api;version="[5.11.0,6.0.0)",
+ org.junit.jupiter.api.extension;version="[5.11.0,6.0.0)",
+ org.osgi.test.common.annotation;version="[1.2.0,2.0.0)",
+ org.osgi.test.junit5.context;version="[1.1.0,2.0.0)",
+ org.osgi.test.junit5.service;version="[1.2.0,2.0.0)",
+ org.slf4j;version="[1.7.0,2.0.0)",
+ software.sham.ssh;version="[0.2.0,1.0.0)"
 Bundle-Activator: git_executor.GitExecutorPlugin
 Require-Bundle: org.eclipse.ui;resolution:=optional,
  org.eclipse.core.runtime,
  org.eclipse.tm.terminal.connector.process;bundle-version="4.9.100";visibility:=reexport,
- junit-jupiter-api;resolution:=optional,
- org.osgi.test.junit5;resolution:=optional,
  org.eclipse.tm.terminal.view.ui;bundle-version="4.11.500";visibility:=reexport,
  org.eclipse.tm.terminal.view.core;bundle-version="4.10.300";visibility:=reexport,
  org.eclipse.tm.terminal.control;bundle-version="5.5.301";visibility:=reexport,
  org.eclipse.tm.terminal.connector.local;bundle-version="4.8.100";visibility:=reexport,
- org.eclipse.cdt.core.native;bundle-version="6.3.401"
+ org.eclipse.cdt.core.native;bundle-version="6.3.401",
+ wrapped.org.hamcrest.hamcrest-core
 Service-Component: OSGI-INF/git_executor.GitExecutor.xml,
  src/git_executor/component.xml
 Bundle-RequiredExecutionEnvironment: JavaSE-17

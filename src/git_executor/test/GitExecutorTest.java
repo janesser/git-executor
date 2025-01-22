@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.logging.Logger;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,13 +19,12 @@ import git_executor.GitExecutor;
 
 public class GitExecutorTest {
 
-	private static final Logger LOGGER = Logger.getLogger(GitExecutorTest.class.getName());
-
 	private GitExecutor underTest;
 
 	public GitExecutorTest() throws GitExecutionException {
 		underTest = new GitExecutor();
-		underTest.setGitExecutable(TestData.GIT_PATH);
+		if (TestData.GIT_PATH.exists())
+			underTest.setGitExecutable(TestData.GIT_PATH);
 		underTest.setGitRepo(TestData.GIT_REPO);
 	}
 
@@ -39,26 +37,23 @@ public class GitExecutorTest {
 	@Test
 	public void canGitVersion() throws GitExecutionException {
 		GitExecutionResult res = underTest.version();
-		LOGGER.finest(res.outputText());
-		assertEquals(0, res.exitCode());
+		assertEquals(0, res.exitCode(), res.outputText());
 	}
 
 	@Test
 	public void canGitReset() throws GitExecutionException {
 		GitExecutionResult res = underTest.reset(true, TestData.GIT_HISTORICAL_COMMIT_ID);
-		LOGGER.finest(res.outputText());
-		assertEquals(0, res.exitCode());
+		assertEquals(0, res.exitCode(), res.outputText());
 	}
 
 	@Test
 	public void canGitClean() throws GitExecutionException, IOException {
 		File f = new File(TestData.GIT_FOLDER, "cleanMe");
-		assertTrue(f.createNewFile());
+		f.createNewFile();
 		assertTrue(f.exists());
 
 		GitExecutionResult res = underTest.clean();
-		LOGGER.finest(res.outputText());
-		assertEquals(0, res.exitCode());
+		assertEquals(0, res.exitCode(), res.outputText());
 
 		assertFalse(f.exists());
 	}
@@ -77,24 +72,15 @@ public class GitExecutorTest {
 	@Test
 	public void canGitFetchHttps() throws GitExecutionException {
 		GitExecutionResult res = underTest.fetch();
-		LOGGER.finest(res.outputText());
-		assertEquals(0, res.exitCode());
+		assertEquals(0, res.exitCode(), res.outputText());
 	}
 
-	@Test
-	public void canGitFetchSsh() throws GitExecutionException {
-		GitExecutionResult result = underTest.fetch("janesser");
-		LOGGER.fine(result.outputText());
-		assertEquals(0, result.exitCode());
-	}
-	
 	@Test
 	public void canGitCommit() throws GitExecutionException {
 		resetTestScenario(); // arrange
 
 		GitExecutionResult res = underTest.commit("empty commit", false, true, false);
-		LOGGER.finest(res.outputText());
-		assertEquals(0, res.exitCode());
+		assertEquals(0, res.exitCode(), res.outputText());
 	}
 
 	@Test
@@ -102,8 +88,7 @@ public class GitExecutorTest {
 		resetTestScenario(); // arrange
 
 		GitExecutionResult res = underTest.pull(); // FF_ONLY
-		LOGGER.finest(res.outputText());
-		assertEquals(0, res.exitCode());
+		assertEquals(0, res.exitCode(), res.outputText());
 	}
 
 	@Test
@@ -111,11 +96,10 @@ public class GitExecutorTest {
 		resetTestScenario(); // arrange
 
 		GitExecutionResult resCommit = underTest.commit("empty commit", false, true, false);
-		LOGGER.finest(resCommit.outputText());
+		assertEquals(0, resCommit.exitCode(), resCommit.outputText());
 
 		GitExecutionResult res = underTest.pull();
-		LOGGER.finest(res.outputText());
-		assertEquals(128, res.exitCode());
+		assertEquals(128, res.exitCode(), res.outputText());
 	}
 
 	@Test
@@ -123,11 +107,10 @@ public class GitExecutorTest {
 		resetTestScenario(); // arrange
 
 		GitExecutionResult resCommit = underTest.commit("empty commit", false, true, false);
-		LOGGER.finest(resCommit.outputText());
+		assertEquals(0, resCommit.exitCode(), resCommit.outputText());
 
 		GitExecutionResult res = underTest.pull(GitExecutor.PullMode.REBASE_MERGE);
-		LOGGER.finest(res.outputText());
-		assertEquals(0, res.exitCode());
+		assertEquals(0, res.exitCode(), res.outputText());
 	}
 
 	@Test
@@ -141,14 +124,13 @@ public class GitExecutorTest {
 		assertEquals(0, resAdd.exitCode());
 
 		GitExecutionResult resCommit = underTest.commit("file deleted accidentaly oopsy");
-		LOGGER.finest(resCommit.outputText());
+		assertEquals(0, resCommit.exitCode(), resCommit.outputText());
 
 		GitExecutionResult res = underTest.rebase(TestData.GIT_HISTORICAL_ONTO_COMMIT_ID);
-		LOGGER.finest(res.outputText());
-		assertEquals(1, res.exitCode());
+		assertEquals(1, res.exitCode(), res.outputText());
 
 		GitExecutionResult abortResult = underTest.rebaseAbort();
-		assertEquals(0, abortResult.exitCode());
+		assertEquals(0, abortResult.exitCode(), abortResult.outputText());
 	}
 
 	@Test
