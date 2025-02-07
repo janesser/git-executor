@@ -1,16 +1,21 @@
 package git_executor;
 
 import java.io.File;
+
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
+import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * GitExecutor allows direct access to git-cli.
@@ -27,6 +32,8 @@ public class GitExecutor {
 		FF_ONLY, REBASE_MERGE
 	}
 
+	private final Logger log = LoggerFactory.getLogger(getClass());
+
 	private static final String[] from(String command, String... commandArgs) {
 		List<String> commandStrings = new ArrayList<String>(1 + (commandArgs != null ? commandArgs.length : 0));
 		commandStrings.add(command);
@@ -38,11 +45,9 @@ public class GitExecutor {
 		return commandStrings.toArray(new String[0]);
 	}
 
-	private File gitRepo;
-
 	private File gitExecutable;
-
-	private Map<String, String> extraEnvs;
+	private File gitRepo = null;
+	private Map<String, String> extraEnvs = new HashMap<>(0);
 
 	/**
 	 * defaults
@@ -76,28 +81,41 @@ public class GitExecutor {
 			throws IOException, InterruptedException {
 		String[] commandStrings = from(gitExecutable.getPath(), gitCommands);
 
-		ProcessBuilder pb = new ProcessBuilder(commandStrings);
-		pb.directory(workingDir);
+		String[] shellCommandStrings = Stream.of("/bin/bash", "-c", //
+				Stream.of(commandStrings).reduce((s1, s2) -> s1 + " " + s2).get() //
+		).toArray((size) -> new String[size]);
 
-		pb.environment().putAll(this.extraEnvs);
+		ProcessBuilder pb = new ProcessBuilder(shellCommandStrings);
+
+		if (workingDir.exists())
+			pb.directory(workingDir);
+
 		pb.redirectErrorStream(true);
 		pb.redirectInput(Redirect.PIPE);
 		pb.redirectOutput(Redirect.PIPE);
+		Map<String, String> environment = pb.environment();
+		environment.putAll(this.extraEnvs);
 
 		Process p = pb.start();
 
 		StringBuilder sb = new StringBuilder();
-//		openTerminalOverProcess(p, sb);
+		// openTerminalOverProcess(p, sb);
 
-		try (Scanner scanner = new Scanner(p.getInputStream())) {
+		try (
+
+				Scanner scanner = new Scanner(p.getInputStream())) {
 			for (; scanner.hasNextLine();) {
-				sb.append(scanner.nextLine());
+				String nextLine = scanner.nextLine();
+				sb.append(nextLine);
 				sb.append('\n');
 			}
-			return new GitExecutionResult(p.waitFor(), sb.toString());
+
+			int waitFor = p.waitFor();
+			return new GitExecutionResult(waitFor, sb.toString());
 		}
 	}
 
+//	// FIXME rework this
 //	private boolean openTerminalOverProcess(Process p, StringBuilder sb) {
 //		ITerminalService terminalService = TerminalServiceFactory.getService();
 //		if (terminalService == null)
@@ -197,8 +215,12 @@ public class GitExecutor {
 		return gitExec("rebase", "--abort");
 	}
 
+	/**
+	 * @see https://stackoverflow.com/a/3879077
+	 * @return
+	 * @throws GitExecutionException
+	 */
 	public boolean hasChanges() throws GitExecutionException {
-		// https://stackoverflow.com/a/3879077
 		GitExecutionResult refreshIndexResult = gitExec("update-index", "--refresh");
 		if (refreshIndexResult.exitCode() != 0)
 			return true;
@@ -224,6 +246,14 @@ public class GitExecutor {
 
 	public GitExecutionResult addRemote(String gitRemote, String gitRemoteUrl) throws GitExecutionException {
 		return gitExec("remote", "add", "-f", gitRemote, gitRemoteUrl);
+	}
+
+	public GitExecutionResult clone(String gitRepoRemote, File gitRepoDir, Optional<Integer> depth)
+			throws GitExecutionException {
+		if (depth.isPresent())
+			return gitExec("clone", "--depth", depth.get().toString(), gitRepoRemote, gitRepoDir.getPath());
+		else
+			return gitExec("clone", gitRepoRemote, gitRepoDir.getPath());
 	}
 
 }
