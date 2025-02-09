@@ -1,4 +1,4 @@
-package git_executor.test;
+package de.esserjan.edu.git_executor.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -22,9 +22,9 @@ import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 
-import git_executor.GitExecutionException;
-import git_executor.GitExecutionResult;
-import git_executor.GitExecutor;
+import de.esserjan.edu.git_executor.GitExecutionException;
+import de.esserjan.edu.git_executor.GitExecutionResult;
+import de.esserjan.edu.git_executor.GitExecutor;
 import software.sham.git.MockGitServer;
 
 public class GitExecutorSshTest {

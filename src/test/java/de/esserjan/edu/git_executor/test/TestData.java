@@ -1,4 +1,4 @@
-package git_executor.test;
+package de.esserjan.edu.git_executor.test;
 
 import java.io.File;
 

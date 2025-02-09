@@ -1,7 +1,6 @@
-package git_executor;
+package de.esserjan.edu.git_executor;
 
 import java.io.File;
-
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
@@ -12,8 +11,6 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ServiceScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +22,6 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Jan Esser <jesser@gmx.de>
  */
-@Component(service = GitExecutor.class, scope = ServiceScope.PROTOTYPE)
 public class GitExecutor {
 
 	public static enum PullMode {

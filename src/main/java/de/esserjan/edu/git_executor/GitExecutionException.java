@@ -1,4 +1,4 @@
-package git_executor;
+package de.esserjan.edu.git_executor;
 
 public class GitExecutionException extends Exception {
 
