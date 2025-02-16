@@ -11,7 +11,7 @@ import de.esserjan.edu.git_executor.GitExecutor;
 
 @ExtendWith(ServiceExtension.class)
 public class GitExecutorServiceTest {
-	
+
 	@InjectService
 	GitExecutor executor;
 
@@ -19,5 +19,5 @@ public class GitExecutorServiceTest {
 	public void canInjectService() {
 		assertNotNull(executor);
 	}
-	
+
 }

@@ -5,7 +5,7 @@ import java.io.File;
 interface TestData {
 
 	final File GIT_PATH = new File("/usr/bin/git");
-	
+
 	final File GIT_REPO = new File("/home/jan/projs/egit");
 	final String GIT_REPO_REMOTE = "https://github.com/eclipse-egit/egit.git";
 	final File GIT_FILE = new File(GIT_REPO, "pom.xml");
@@ -18,13 +18,11 @@ interface TestData {
 	final String SSH_TEST_ASKPASS = "testAskPass.sh";
 	final String GIT_MOCK_REMOTE = "mockRemote";
 	final String SSH_TEST_PRINCIPAL = "testPrincipal";
-	final File KEY_FILE = new File("test_key");
-	final File KEY_PASSPHRASE = new File("test_key_askpass");
 
 	final int SSH_MOCK_PORT = 61333; // auto select
 	final String SSH_SERVER = "localhost";
-	final String SSH_SERVER_URL = "ssh://" + SSH_TEST_PRINCIPAL + "@" + SSH_SERVER + ":" + SSH_MOCK_PORT;
-	final String GIT_REMOTE_PATH = "/git_path";
-	final String GIT_MOCK_REMOTE_URL = SSH_SERVER_URL + GIT_REMOTE_PATH;
+	final String GIT_REMOTE_PROJECT = "egit.mocked";
+	final String GIT_MOCK_REMOTE_URL = String.format("ssh://%s@%s:%d/%s", //
+			SSH_TEST_PRINCIPAL, SSH_SERVER, SSH_MOCK_PORT, GIT_REMOTE_PROJECT);
 
 }

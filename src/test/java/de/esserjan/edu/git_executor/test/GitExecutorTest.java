@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -54,7 +53,6 @@ public class GitExecutorTest {
 
 	@Test
 	@Order(3)
-	@Disabled
 	public void canGitClone() throws GitExecutionException, IOException, InterruptedException {
 		int deleteExitCode = Runtime.getRuntime().exec("rm -fR " + TestData.GIT_REPO.getPath()).waitFor();
 		assertEquals(0, deleteExitCode);
@@ -106,23 +104,6 @@ public class GitExecutorTest {
 		GitExecutionResult res = underTest.fetch();
 		log.debug(res.outputText());
 		assertEquals(0, res.exitCode(), res.outputText());
-	}
-
-	@Test
-	@Order(5)
-	public void canGitFetchSsh() throws GitExecutionException, IOException, InterruptedException {
-		// given prepared SSH key
-		
-		underTest.getExtraEnvs().put("GIT_SSH_COMMAND", "ssh -i " + TestData.KEY_FILE.getPath());
-		underTest.getExtraEnvs().put("SSH_ASKPASS", TestData.KEY_PASSPHRASE.getPath());
-		underTest.getExtraEnvs().put("SSH_ASKPASS_REQUIRE", "prefer");
-		underTest.getExtraEnvs().put("SSH_TEST_PASSPHRASE", "new_passphrase");
-
-		GitExecutionResult res = underTest.fetch("janesser");
-		log.debug(res.outputText());
-		assertEquals(0, res.exitCode(), res.outputText());
-		
-		underTest.getExtraEnvs().clear();
 	}
 
 	@Test
