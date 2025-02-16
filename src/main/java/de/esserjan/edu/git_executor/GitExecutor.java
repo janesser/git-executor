@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,24 +23,21 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Jan Esser <jesser@gmx.de>
  */
+@Component
 public class GitExecutor {
 
 	public static enum PullMode {
 		FF_ONLY, REBASE_MERGE
 	}
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
+	public static final String ENV_SSH_ASKPASS = "SSH_ASKPASS";
+	private static final String SETSID = "setsid";
 
-	private static final String[] from(String command, String... commandArgs) {
-		List<String> commandStrings = new ArrayList<String>(1 + (commandArgs != null ? commandArgs.length : 0));
-		commandStrings.add(command);
-
-		for (String commandArg : commandArgs)
-			if (commandArg != null && commandArg != "")
-				commandStrings.add(commandArg);
-
-		return commandStrings.toArray(new String[0]);
+	private static final String[] prepend(String command, String... commandArgs) {
+		return Stream.concat(Stream.of(command), Stream.of(commandArgs)).toArray(size -> new String[size]);
 	}
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private File gitExecutable;
 	private File gitRepo = null;
@@ -65,23 +63,28 @@ public class GitExecutor {
 		return extraEnvs;
 	}
 
+	private GitExecutionResult gitExec(String gitCommand, List<String> gitCommandCall) throws GitExecutionException {
+		return gitExec(gitCommand, gitCommandCall.toArray(size -> new String[size]));
+	}
+
 	private GitExecutionResult gitExec(String gitCommand, String... gitCommandArgs) throws GitExecutionException {
 		try {
-			return gitExec(gitRepo, from(gitCommand, gitCommandArgs));
+			return gitExec(gitRepo, prepend(gitCommand, gitCommandArgs));
 		} catch (IOException | InterruptedException ex) {
 			throw new GitExecutionException(ex);
 		}
 	}
 
-	private GitExecutionResult gitExec(File workingDir, String... gitCommands)
-			throws IOException, InterruptedException {
-		String[] commandStrings = from(gitExecutable.getPath(), gitCommands);
+	private GitExecutionResult gitExec(File workingDir, String[] gitCommands) throws IOException, InterruptedException {
+		String[] commandStrings = prepend(gitExecutable.getPath(), gitCommands);
 
-		String[] shellCommandStrings = Stream.of("/bin/bash", "-c", //
-				Stream.of(commandStrings).reduce((s1, s2) -> s1 + " " + s2).get() //
-		).toArray((size) -> new String[size]);
+		if (this.extraEnvs.containsKey(ENV_SSH_ASKPASS)) {
+			// https://stackoverflow.com/questions/38354773/how-to-pass-an-ssh-key-passphrase-via-environment-variable
+			commandStrings = prepend(SETSID, commandStrings);
+			log.info("Detected {} pointing to {}", ENV_SSH_ASKPASS, this.extraEnvs.get(ENV_SSH_ASKPASS));
+		}
 
-		ProcessBuilder pb = new ProcessBuilder(shellCommandStrings);
+		final ProcessBuilder pb = new ProcessBuilder(commandStrings);
 
 		if (workingDir.exists())
 			pb.directory(workingDir);
@@ -89,9 +92,13 @@ public class GitExecutor {
 		pb.redirectErrorStream(true);
 		pb.redirectInput(Redirect.PIPE);
 		pb.redirectOutput(Redirect.PIPE);
+
 		Map<String, String> environment = pb.environment();
 		environment.putAll(this.extraEnvs);
 
+		log.debug("Executing: {}", (Object) commandStrings);
+		log.debug("With extraEnvs: {}", this.extraEnvs);
+		log.debug("In workingDir: {}", workingDir);
 		Process p = pb.start();
 
 		StringBuilder sb = new StringBuilder();
@@ -196,11 +203,17 @@ public class GitExecutor {
 		if (commitAll)
 			this.addAll();
 
-		return gitExec("commit", //
-				"-m", "\"" + message + "\"", //
-				amend ? "--amend" : "", //
-				allowEmpty ? "--allow-empty" : "" //
-		);
+		List<String> commitArgs = new ArrayList<String>();
+		commitArgs.add("-m");
+		commitArgs.add("\"" + message + "\"");
+
+		if (amend)
+			commitArgs.add("--amend");
+
+		if (allowEmpty)
+			commitArgs.add("--allow-empty");
+
+		return gitExec("commit", commitArgs);
 	}
 
 	public GitExecutionResult rebase(String onto) throws GitExecutionException {
@@ -241,7 +254,11 @@ public class GitExecutor {
 	}
 
 	public GitExecutionResult addRemote(String gitRemote, String gitRemoteUrl) throws GitExecutionException {
-		return gitExec("remote", "add", "-f", gitRemote, gitRemoteUrl);
+		return gitExec("remote", "add", gitRemote, gitRemoteUrl);
+	}
+
+	public GitExecutionResult removeRemote(String gitRemote) throws GitExecutionException {
+		return gitExec("remote", "remove", gitRemote);
 	}
 
 	public GitExecutionResult clone(String gitRepoRemote, File gitRepoDir, Optional<Integer> depth)

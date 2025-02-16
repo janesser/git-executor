@@ -14,8 +14,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -28,8 +26,6 @@ import de.esserjan.edu.git_executor.GitExecutor;
 import software.sham.git.MockGitServer;
 
 public class GitExecutorSshTest {
-
-	private static final Logger LOG = LoggerFactory.getLogger(GitExecutorSshTest.class);
 
 	private GitExecutor underTest;
 
@@ -87,6 +83,9 @@ public class GitExecutorSshTest {
 
 		server = new MockGitServer(TestData.SSH_MOCK_PORT);
 		server.allowPublicKey(SshKeyUtils.getPublicKey(keyFilePub).getJCEPublicKey()).enableShell();
+		
+		server.prepareGitProject(TestData.GIT_REMOTE_PROJECT);
+		
 		server.start();
 	}
 
@@ -96,15 +95,17 @@ public class GitExecutorSshTest {
 	}
 
 	@Test
-	public void canGitFetchSsh() throws IOException, GeneralSecurityException, GitExecutionException {
+	public void canGitFetchSsh()
+			throws IOException, GeneralSecurityException, GitExecutionException, InterruptedException {
 		// arrange 3: re-register mock remote
+		underTest.removeRemote(TestData.GIT_MOCK_REMOTE);
 		underTest.addRemote(TestData.GIT_MOCK_REMOTE, TestData.GIT_MOCK_REMOTE_URL);
 
 		// arrange 4: set GIT_SSH_COMMAND with specific key
 		underTest.getExtraEnvs().put("GIT_SSH_COMMAND", //
 				Stream.of(sshCommand(null)).reduce("", (a, b) -> a + " " + b) //
 		);
-		underTest.getExtraEnvs().put("GIT_ASKPASS", askPassFile.getAbsolutePath());
+		underTest.getExtraEnvs().put(GitExecutor.ENV_SSH_ASKPASS, askPassFile.getAbsoluteFile().toString());
 
 		// act
 		GitExecutionResult res = underTest.fetch(TestData.GIT_MOCK_REMOTE);
@@ -119,7 +120,7 @@ public class GitExecutorSshTest {
 
 	private String[] sshCommand(String serverUrl, String command) {
 		return new String[] { //
-				"/usr/bin/ssh", "-vv", //
+				"/usr/bin/ssh", "-v", //
 				"-i", keyFilePriv.getAbsolutePath(), //
 				"-o", "IdentitiesOnly=yes", //
 				"-o", "StrictHostKeyChecking=no", //
