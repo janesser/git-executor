@@ -4,12 +4,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.esserjan.edu</groupId>
 	<artifactId>git-executor</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<generated.osgi>generated/osgi</generated.osgi>
 	</properties>
 
 	<dependencyManagement>
@@ -26,15 +25,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.scr.ds-annotations</artifactId>
-			<version>1.2.10</version>
-			<scope>provided</scope>
-		</dependency>
-				<dependency>
 			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.core</artifactId>
-			<version>6.0.0</version>
+			<artifactId>org.osgi.service.component.annotations</artifactId>
+			<version>1.5.1</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -44,6 +37,7 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<!-- UNIT TESTING -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
@@ -73,30 +67,109 @@
 			<version>3.1.2</version>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- OSGI TEST JUNIT5 -->
+		<!--
+		https://github.com/laeubisoft/osgi-test-framework/blob/main/examples/maven/impl-bundle/pom.xml -->
+		<dependency>
+			<groupId>de.laeubisoft</groupId>
+			<artifactId>osgi-test-framework</artifactId>
+			<version>0.0.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.service.component</artifactId>
+			<version>1.5.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.test.junit5</artifactId>
+			<version>1.3.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.platform</groupId>
+			<artifactId>org.eclipse.osgi</artifactId>
+			<version>3.22.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.scr</artifactId>
+			<version>2.2.12</version>
+			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>animal-sniffer-annotations</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.dto</artifactId>
+			<version>1.1.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.framework</artifactId>
+			<version>1.10.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.aries.spifly</groupId>
+			<artifactId>org.apache.aries.spifly.dynamic.bundle</artifactId>
+			<version>1.3.7</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
-		<resources>
-			<resource>
-				<directory>${generated.osgi}</directory>
-			</resource>
-		</resources>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.13.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.felix</groupId>
+					<artifactId>maven-bundle-plugin</artifactId>
+					<version>6.0.0</version>
+					<extensions>true</extensions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>3.5.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-failsafe-plugin</artifactId>
+					<version>3.5.2</version>
+					<extensions>true</extensions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>6.0.0</version>
-				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-						<Bundle-Name>${project.name}</Bundle-Name>
+						<Bundle-Activator>
+							de.esserjan.edu.git_executor.BundleActivator</Bundle-Activator>
+						<Bundle-SymbolicName>${project.name}</Bundle-SymbolicName>
+						<Bundle-Name>${project.groupId}.${project.artifactId}</Bundle-Name>
 						<Bundle-Version>${project.version}</Bundle-Version>
 						<Export-Service>de.esserjan.edu.git_executor.GitExecutor</Export-Service>
 					</instructions>
 					<exportScr>true</exportScr>
-					<scrLocation>${generated.osgi}</scrLocation>
-					<manifestLocation>${generated.osgi}/META-INF</manifestLocation>
+					<scrLocation>src/main/resources</scrLocation>
+					<manifestLocation>src/main/resources/META-INF</manifestLocation>
 					<supportIncrementalBuild>true</supportIncrementalBuild>
 				</configuration>
 				<executions>
@@ -107,14 +180,47 @@
 						</goals>
 					</execution>
 				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.felix</groupId>
+						<artifactId>org.apache.felix.scr.ds-annotations</artifactId>
+						<version>1.2.10</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
 				<configuration>
 					<release>17</release>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>**/*BundleTest.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>**/*BundleTest.java</include>
+					</includes>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>verify</goal>
+							<goal>integration-test</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

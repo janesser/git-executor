@@ -1,0 +1,24 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1740252767665
+Build-Jdk-Spec: 21
+Bundle-Activator: de.esserjan.edu.git_executor.BundleActivator
+Bundle-ManifestVersion: 2
+Bundle-Name: de.esserjan.edu.git-executor
+Bundle-SymbolicName: git-executor
+Bundle-Version: 0.0.2.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin 6.0.0
+Export-Package: de.esserjan.edu.git_executor;version="0.0.1.SNAPSHOT";us
+ es:="org.osgi.framework"
+Export-Service: de.esserjan.edu.git_executor.GitExecutor
+Import-Package: de.esserjan.edu.git_executor;version="[0.0,1)",java.io,j
+ ava.lang,java.lang.invoke,java.lang.runtime,java.nio.file,java.util,jav
+ a.util.function,java.util.stream,org.osgi.framework;version="[1.10,2)",
+ org.slf4j;version="[2.0,3)"
+Originally-Created-By: Apache Maven Bundle Plugin 6.0.0
+Require-Capability: osgi.extender;filter:="(&(osgi.extender=osgi.compone
+ nt)(version>=1.5.0)(!(version>=2.0.0)))",osgi.ee;filter:="(&(osgi.ee=Ja
+ vaSE)(version=17))",osgi.extender;filter:="(&(osgi.extender=osgi.compon
+ ent)(version>=1.5.0)(!(version>=2.0.0)))"
+Service-Component: OSGI-INF/de.esserjan.edu.git_executor.GitExecutor.xml
+ ,OSGI-INF/de.esserjan.edu.git_executor.GitExecutor.xml
+Tool: Bnd-7.0.0.202310060912
