@@ -23,9 +23,10 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 import de.esserjan.edu.git_executor.GitExecutionException;
 import de.esserjan.edu.git_executor.GitExecutionResult;
 import de.esserjan.edu.git_executor.GitExecutor;
+import de.esserjan.edu.git_executor.test.TestData.SshData;
 import software.sham.git.MockGitServer;
 
-public class GitExecutorSshTest {
+public class GitExecutorSshTest extends GitTestSupport {
 
 	private GitExecutor underTest;
 
@@ -44,7 +45,7 @@ public class GitExecutorSshTest {
 
 	@BeforeAll
 	public static void generateClientKeypair() throws IOException, SshException {
-		keyFilePriv = File.createTempFile(TestData.SSH_TEST_KEY, "");
+		keyFilePriv = File.createTempFile(SshData.SSH_TEST_KEY, "");
 		Files.setPosixFilePermissions(keyFilePriv.toPath(), PosixFilePermissions.fromString("rw-" + "------"));
 		keyFilePriv.deleteOnExit();
 
@@ -52,13 +53,13 @@ public class GitExecutorSshTest {
 		keyFilePub.deleteOnExit();
 
 		SshKeyPair keyPair = SshKeyPairGenerator.generateKeyPair(SshKeyPairGenerator.SSH2_RSA);
-		SshKeyUtils.savePrivateKey(keyPair, TestData.SSH_TEST_KEY_PWD, "", keyFilePriv);
+		SshKeyUtils.savePrivateKey(keyPair, SshData.SSH_TEST_KEY_PWD, "", keyFilePriv);
 		SshKeyUtils.createPublicKeyFile(keyPair.getPublicKey(), "", keyFilePub);
 	}
 
 	@BeforeAll
 	public static void setupAskpass() throws IOException {
-		askPassFile = File.createTempFile(TestData.SSH_TEST_ASKPASS, "");
+		askPassFile = File.createTempFile(SshData.SSH_TEST_ASKPASS, "");
 		Files.setPosixFilePermissions(askPassFile.toPath(), PosixFilePermissions.fromString("rwx" + "------"));
 		askPassFile.deleteOnExit();
 
@@ -66,7 +67,7 @@ public class GitExecutorSshTest {
 			writer.write("#!/bin/sh");
 			writer.write(System.lineSeparator());
 			writer.write("echo ");
-			writer.write(TestData.SSH_TEST_KEY_PWD);
+			writer.write(SshData.SSH_TEST_KEY_PWD);
 			writer.write(System.lineSeparator());
 			writer.flush();
 		}
@@ -77,15 +78,15 @@ public class GitExecutorSshTest {
 		File knownHosts = new File(System.getProperty("user.home") + "/.ssh", "known_hosts");
 		Process sshkeygenCleanup = Runtime.getRuntime().exec(new String[] { "/usr/bin/ssh-keygen", //
 				"-f", knownHosts.getAbsolutePath(), //
-				"-R", "[" + TestData.SSH_SERVER + "]:" + TestData.SSH_MOCK_PORT //
+				"-R", "[" + SshData.SSH_SERVER + "]:" + SshData.SSH_MOCK_PORT //
 		});
 		assertEquals(0, sshkeygenCleanup.waitFor(), sshkeygenCleanup.errorReader().readLine());
 
-		server = new MockGitServer(TestData.SSH_MOCK_PORT);
+		server = new MockGitServer(SshData.SSH_MOCK_PORT);
 		server.allowPublicKey(SshKeyUtils.getPublicKey(keyFilePub).getJCEPublicKey()).enableShell();
-		
+
 		server.prepareGitProject(TestData.GIT_REMOTE_PROJECT);
-		
+
 		server.start();
 	}
 
@@ -99,7 +100,7 @@ public class GitExecutorSshTest {
 			throws IOException, GeneralSecurityException, GitExecutionException, InterruptedException {
 		// arrange 3: re-register mock remote
 		underTest.removeRemote(TestData.GIT_MOCK_REMOTE);
-		underTest.addRemote(TestData.GIT_MOCK_REMOTE, TestData.GIT_MOCK_REMOTE_URL);
+		underTest.addRemote(TestData.GIT_MOCK_REMOTE, SshData.GIT_REMOTE_URL);
 
 		// arrange 4: set GIT_SSH_COMMAND with specific key
 		underTest.getExtraEnvs().put("GIT_SSH_COMMAND", //
@@ -111,7 +112,7 @@ public class GitExecutorSshTest {
 		GitExecutionResult res = underTest.fetch(TestData.GIT_MOCK_REMOTE);
 
 		// assert
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	private String[] sshCommand(String serverUrl) {

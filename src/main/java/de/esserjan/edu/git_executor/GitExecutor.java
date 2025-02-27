@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Scanner;
 import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
@@ -101,21 +100,8 @@ public class GitExecutor {
 		log.debug("In workingDir: {}", workingDir);
 		Process p = pb.start();
 
-		StringBuilder sb = new StringBuilder();
-		// openTerminalOverProcess(p, sb);
-
-		try (
-
-				Scanner scanner = new Scanner(p.getInputStream())) {
-			for (; scanner.hasNextLine();) {
-				String nextLine = scanner.nextLine();
-				sb.append(nextLine);
-				sb.append('\n');
-			}
-
-			int waitFor = p.waitFor();
-			return new GitExecutionResult(waitFor, sb.toString());
-		}
+		ConsoleOutputCollector collector = ConsoleOutputCollector.collect(p);
+		return new GitExecutionResult(p.waitFor(), collector.toString());
 	}
 
 //	// FIXME rework this
@@ -263,6 +249,7 @@ public class GitExecutor {
 
 	public GitExecutionResult clone(String gitRepoRemote, File gitRepoDir, Optional<Integer> depth)
 			throws GitExecutionException {
+		this.setGitRepo(gitRepoDir);
 		if (depth.isPresent())
 			return gitExec("clone", "--depth", depth.get().toString(), gitRepoRemote, gitRepoDir.getPath());
 		else

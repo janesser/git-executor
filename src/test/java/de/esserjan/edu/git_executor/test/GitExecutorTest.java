@@ -15,18 +15,14 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.esserjan.edu.git_executor.GitExecutionException;
 import de.esserjan.edu.git_executor.GitExecutionResult;
 import de.esserjan.edu.git_executor.GitExecutor;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class GitExecutorTest {
+public class GitExecutorTest extends GitTestSupport {
 
-	private final Logger log = LoggerFactory.getLogger(getClass()); 
-	
 	private GitExecutor underTest;
 
 	public GitExecutorTest() throws GitExecutionException {
@@ -47,8 +43,7 @@ public class GitExecutorTest {
 	@Order(2)
 	public void canGitVersion() throws GitExecutionException {
 		GitExecutionResult res = underTest.version();
-		log.debug(res.outputText());
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	@Test
@@ -59,9 +54,7 @@ public class GitExecutorTest {
 		assertFalse(TestData.GIT_REPO.exists());
 
 		GitExecutionResult res = underTest.clone(TestData.GIT_REPO_REMOTE, TestData.GIT_REPO, Optional.empty());
-		log.debug(res.outputText());
-
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 		assertTrue(TestData.GIT_REPO.exists());
 	}
 
@@ -69,8 +62,7 @@ public class GitExecutorTest {
 	@Order(4)
 	public void canGitReset() throws GitExecutionException {
 		GitExecutionResult res = underTest.reset(true, TestData.GIT_HISTORICAL_COMMIT_ID);
-		log.debug(res.outputText());
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	@Test
@@ -81,8 +73,7 @@ public class GitExecutorTest {
 		assertTrue(f.exists());
 
 		GitExecutionResult res = underTest.clean();
-		log.debug(res.outputText());
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 
 		assertFalse(f.exists());
 	}
@@ -102,8 +93,7 @@ public class GitExecutorTest {
 	@Order(5)
 	public void canGitFetchHttps() throws GitExecutionException {
 		GitExecutionResult res = underTest.fetch();
-		log.debug(res.outputText());
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	@Test
@@ -112,8 +102,7 @@ public class GitExecutorTest {
 		resetTestScenario(); // arrange
 
 		GitExecutionResult res = underTest.commit("empty commit", false, true, false);
-		log.debug(res.outputText());
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	@Test
@@ -138,7 +127,7 @@ public class GitExecutorTest {
 				StandardCopyOption.REPLACE_EXISTING);
 
 		GitExecutionResult res = underTest.addAll();
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	@Test
@@ -150,7 +139,7 @@ public class GitExecutorTest {
 		assertTrue(targetF.createNewFile());
 
 		GitExecutionResult res = underTest.add(targetF);
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	@Test
@@ -172,7 +161,7 @@ public class GitExecutorTest {
 
 		GitExecutionResult res = underTest.pull(); // FF_ONLY
 		log.debug(res.outputText());
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	@Test
@@ -181,7 +170,7 @@ public class GitExecutorTest {
 		resetTestScenario(); // arrange
 
 		GitExecutionResult resCommit = underTest.commit("empty commit", false, true, false);
-		assertEquals(0, resCommit.exitCode(), resCommit.outputText());
+		assertExitCodeZero(resCommit);
 
 		GitExecutionResult res = underTest.pull();
 		log.debug(res.outputText());
@@ -194,11 +183,10 @@ public class GitExecutorTest {
 		resetTestScenario(); // arrange
 
 		GitExecutionResult resCommit = underTest.commit("empty commit", false, true, false);
-		assertEquals(0, resCommit.exitCode(), resCommit.outputText());
+		assertExitCodeZero(resCommit);
 
 		GitExecutionResult res = underTest.pull(GitExecutor.PullMode.REBASE_MERGE);
-		log.debug(res.outputText());
-		assertEquals(0, res.exitCode(), res.outputText());
+		assertExitCodeZero(res);
 	}
 
 	@Test
@@ -210,16 +198,16 @@ public class GitExecutorTest {
 		Files.move(TestData.GIT_FILE.toPath(), targetF.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
 		GitExecutionResult resAdd = underTest.add(TestData.GIT_FILE);
-		assertEquals(0, resAdd.exitCode());
+		assertExitCodeZero(resAdd);
 
 		GitExecutionResult resCommit = underTest.commit("file deleted accidentaly oopsy");
-		assertEquals(0, resCommit.exitCode(), resCommit.outputText());
+		assertExitCodeZero(resCommit);
 
 		GitExecutionResult res = underTest.rebase(TestData.GIT_HISTORICAL_ONTO_COMMIT_ID);
 		log.debug(res.outputText());
 		assertEquals(1, res.exitCode(), res.outputText());
 
 		GitExecutionResult abortResult = underTest.rebaseAbort();
-		assertEquals(0, abortResult.exitCode(), abortResult.outputText());
+		assertExitCodeZero(abortResult);
 	}
 }
