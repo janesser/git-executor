@@ -1,4 +1,4 @@
-package de.esserjan.edu.git_executor.test.osgi;
+package de.esserjan.edu.imbecile.test.osgi;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 

@@ -1,6 +1,9 @@
 /target/
 /generated/
-.*
+
 .classpath
 .project
 .settings
+
+.idea
+.externalToolBuilders

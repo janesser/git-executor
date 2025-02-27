@@ -1,14 +1,14 @@
-package de.esserjan.edu.git_executor.test.osgi;
+package de.esserjan.edu.imbecile.test.osgi;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import de.esserjan.edu.imbecile.Imbecile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.launch.Framework;
 import org.osgi.test.common.annotation.InjectService;
 
-import de.esserjan.edu.git_executor.GitExecutor;
 import de.laeubisoft.osgi.junit5.framework.annotations.EmbeddedFramework;
 import de.laeubisoft.osgi.junit5.framework.annotations.WithBundle;
 import de.laeubisoft.osgi.junit5.framework.extension.FrameworkExtension;
@@ -18,7 +18,8 @@ import de.laeubisoft.osgi.junit5.framework.services.FrameworkEvents;
 @UseFelixServiceComponentRuntime
 @UseDynamicBundle
 @UseSlf4j
-@WithBundle(value = "git-executor", start = true)
+@WithBundle("org.jetbrains.kotlin.osgi-bundle")
+@WithBundle(value = "imbecile", start = true)
 public class GitExecutorBundleTest {
 	@InjectService
 	FrameworkEvents frameworkEvents;
@@ -35,7 +36,7 @@ public class GitExecutorBundleTest {
 	}
 
 	@InjectService
-	GitExecutor underTest;
+	Imbecile underTest;
 
 	@Test
 	public void gotInjected() {
